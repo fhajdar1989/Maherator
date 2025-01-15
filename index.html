@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maherator</title>
+    <link rel="icon" href="icon.ico" type="image/x-icon">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #800000; /* Maroon */
+            margin-bottom: 20px;
+        }
+        .icon {
+            display: block;
+            margin: 0 auto 10px auto;
+            width: 80px;
+            height: 80px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.4);
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .buttons button {
+            width: 30%;
+            padding: 10px;
+            background-color: #800000; /* Maroon */
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .buttons button:hover {
+            background-color: #a52a2a; /* Slightly lighter maroon */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="logo.png" alt="App Icon" class="icon">
+        <h1 class="title">Maherator</h1>
+
+        <div class="form-group">
+            <label for="broj_certifkata">Broj Certifikata:</label>
+            <input type="text" id="broj_certifkata" placeholder="Enter Initial Broj Certifikata">
+        </div>
+
+        <div class="form-group">
+            <label for="datum_dokumenta">Datum Dokumenta:</label>
+            <input type="text" id="datum_dokumenta" placeholder="dd.mm.yyyy">
+        </div>
+
+        <div class="form-group">
+            <label for="naziv_firme">Naziv Firme:</label>
+            <input type="text" id="naziv_firme" placeholder="Enter Naziv Firme">
+        </div>
+
+        <div class="form-group">
+            <label for="adresa_firme">Adresa Firme:</label>
+            <input type="text" id="adresa_firme" placeholder="Enter Adresa Firme">
+        </div>
+
+        <div class="form-group">
+            <label for="grad">Grad:</label>
+            <input type="text" id="grad" placeholder="Enter Grad">
+        </div>
+
+        <div class="buttons">
+            <button onclick="generateCertificates()">Kreiraj certifikate</button>
+            <button onclick="generateAgreements()">Kreiraj uvjerenje</button>
+            <button onclick="exitApp()">Izlaz</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom Confirm Modal
+        function customConfirm(message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '9999';
+
+            const dialog = document.createElement('div');
+            dialog.style.backgroundColor = '#fff';
+            dialog.style.padding = '20px';
+            dialog.style.borderRadius = '5px';
+            dialog.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+            dialog.style.textAlign = 'center';
+
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            dialog.appendChild(messageElement);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginTop = '10px';
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.justifyContent = 'space-around';
+
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.style.backgroundColor = '#800000';
+            okButton.style.color = '#fff';
+            okButton.style.border = 'none';
+            okButton.style.padding = '10px 20px';
+            okButton.style.borderRadius = '3px';
+            okButton.style.cursor = 'pointer';
+            okButton.onclick = function () {
+                document.body.removeChild(modal);
+                onConfirm();
+            };
+
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.style.backgroundColor = '#ccc';
+            cancelButton.style.border = 'none';
+            cancelButton.style.padding = '10px 20px';
+            cancelButton.style.borderRadius = '3px';
+            cancelButton.style.cursor = 'pointer';
+            cancelButton.onclick = function () {
+                document.body.removeChild(modal);
+            };
+
+            buttonContainer.appendChild(okButton);
+            buttonContainer.appendChild(cancelButton);
+            dialog.appendChild(buttonContainer);
+            modal.appendChild(dialog);
+            document.body.appendChild(modal);
+        }
+
+        // Define the showResult function
+        function showResult(message) {
+            alert(message); // Display results in a popup
+        }
+
+        // Exit App Function
+        function exitApp() {
+            customConfirm("Da li ste sigurni da želite izaći?", () => {
+                window.pywebview.api.exit_application();
+            });
+        }
+
+        // Handle Closing the Application with the "X" Button
+        window.addEventListener('beforeunload', (event) => {
+            event.preventDefault();
+            customConfirm("Da li ste sigurni da želite izaći?", () => {
+                window.pywebview.api.exit_application();
+            });
+        });
+
+        // Date Picker Logic
+        const dateInput = document.getElementById('datum_dokumenta');
+
+        dateInput.addEventListener('focus', () => {
+            dateInput.type = 'date';
+        });
+
+        dateInput.addEventListener('blur', () => {
+            if (dateInput.value) {
+                const [yyyy, mm, dd] = dateInput.value.split('-');
+                dateInput.type = 'text';
+                dateInput.value = `${dd}.${mm}.${yyyy}`;
+            } else {
+                dateInput.type = 'text';
+                dateInput.value = '';
+            }
+        });
+
+        dateInput.addEventListener('click', () => {
+            if (dateInput.type !== 'date') {
+                dateInput.type = 'date';
+                dateInput.focus();
+            }
+        });
+
+        // Validate Inputs
+        function validateInputs() {
+            const fields = ["broj_certifkata", "datum_dokumenta", "naziv_firme", "adresa_firme", "grad"];
+            for (let field of fields) {
+                const value = document.getElementById(field).value.trim();
+                if (!value) {
+                    alert("Molim vas popunite podatke!!.");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Generate Certificates
+        function generateCertificates() {
+            if (validateInputs()) {
+                window.pywebview.api.process_certificates();
+            }
+        }
+
+        // Generate Agreements
+        function generateAgreements() {
+            if (validateInputs()) {
+                window.pywebview.api.process_agreements();
+            }
+        }
+    </script>
+</body>
+</html>
