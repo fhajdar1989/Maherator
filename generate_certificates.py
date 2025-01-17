@@ -2,65 +2,68 @@ from docx import Document
 from datetime import datetime
 import os
 import pandas as pd
+import logging
+from utils import validate_file, format_dates, clean_file_name, load_word_template, logging_error,replace_placeholders_in_cell,replace_placeholders_in_paragraph
 
 
-def replace_placeholder_in_paragraph(paragraph, placeholders):
-    """
-    Replaces placeholders in a paragraph, preserving formatting and handling split runs.
-    """
-    # Combine all runs' text in the paragraph
-    full_text = "".join(run.text for run in paragraph.runs)
 
-    # Replace placeholders in the combined text
-    for placeholder, replacement in placeholders.items():
-        full_text = full_text.replace(placeholder, replacement)
-
-    # Clear all existing runs in the paragraph
-    for run in paragraph.runs:
-        run.text = ""
-
-    # Add the updated text back to the paragraph
-    paragraph.add_run(full_text)
 
 
 
 def generate_certificates(excel_file_path, word_template_path, output_folder,
                           broj_certifkata_ui, naziv_firme_ui, adresa_firme_ui, datum_dokumenta_ui, grad_ui):
-    # Load the Excel data
-    data = pd.read_excel(excel_file_path)
-    current_year = datetime.now().year
+    try:
+        # Load Excel data
+        data = pd.read_excel(excel_file_path)
 
-    # Load the Word template
-    template_doc = Document(word_template_path)
+        # Format date columns
+        for column in data.columns:
+            if pd.api.types.is_datetime64_any_dtype(data[column]):
+                data[column] = data[column].dt.strftime('%d.%m.%Y')
 
-    for index, row in data.iterrows():
-        doc_copy = Document(word_template_path)
-        ime_prezime= f"{row.get('ime')+("_")+row.get('prezime', '')}"
-        # Prepare placeholders and their replacements
-        placeholders = {
-            "<<broj_certifkata>>": f"{broj_certifkata_ui}-{index + 1}/{current_year}",
-            "<<datum_dokumenta>>": datum_dokumenta_ui,
-            "<<naziv_firme>>": naziv_firme_ui,
-            "<<adresa_firme>>": adresa_firme_ui,
-            "<<ime_prezime>>": f"{row.get('ime', '').strip()} {row.get('prezime', '').strip()}",
-            "<<datum_rodjenja>>": f"{row.get('datum_rodjenja')}",
-            "<<adresa_stanovanja>>": f"{row.get('adresa_stanovanja')}",
-            "<<grad>>": grad_ui,
-            "<<vrsta_posla>>": row.get('vrsta_posla', '').strip()
-        }
+        current_year = datetime.now().year
 
-        # Replace placeholders in paragraphs
-        for paragraph in doc_copy.paragraphs:
-            replace_placeholder_in_paragraph(paragraph, placeholders)
+        # Iterate over rows in the Excel file
+        for index, row in data.iterrows():
+            try:
+                # Load and prepare the Word template
+                doc = Document(word_template_path)
+                ime_prezime = f"{row.get('ime', '').strip()}_{row.get('prezime', '').strip()}"
+                safe_file_name = clean_file_name(ime_prezime)
 
-        # Replace placeholders in tables (if any)
-        for table in doc_copy.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        replace_placeholder_in_paragraph(paragraph, placeholders)
+                # Prepare placeholders
+                placeholders = {
+                    "<<broj_certifkata>>": f"{broj_certifkata_ui}-{index + 1}/{current_year}",
+                    "<<datum_dokumenta>>": datum_dokumenta_ui,
+                    "<<naziv_firme>>": naziv_firme_ui,
+                    "<<adresa_firme>>": adresa_firme_ui,
+                    "<<grad_firme>>": grad_ui,
+                    "<<ime_prezime>>": f"{row.get('ime', '').strip()} {row.get('prezime', '').strip()}",
+                    "<<datum_rodjenja>>": row.get('datum_rodjenja', 'N/A') if isinstance(row.get('datum_rodjenja'), str)
+                                        else row.get('datum_rodjenja').strftime('%d.%m.%Y') if pd.notna(row.get('datum_rodjenja')) else 'N/A',
+                    "<<adresa_stanovanja>>": row.get('adresa_stanovanja', 'N/A'),
+                    "<<grad_stanovanja>>": row.get('grad_stanovanja', 'N/A'),
+                    "<<vrsta_posla>>": row.get('vrsta_posla', 'N/A').strip()
+                }
 
-        # Save the updated document
-        output_file = os.path.join(output_folder, f"Certifikat_{ime_prezime}.docx")
-        doc_copy.save(output_file)
-        print(f"Certifikati generisani: {output_file}")
+                # Replace placeholders in paragraphs
+                for paragraph in doc.paragraphs:
+                    replace_placeholders_in_paragraph(paragraph, placeholders)
+
+                # Replace placeholders in table cells
+                for table in doc.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            replace_placeholders_in_cell(cell, placeholders)
+
+                # Save the updated document
+                output_file = os.path.join(output_folder, f"Certifikat_{safe_file_name}.docx")
+                doc.save(output_file)
+                logging.info(f"Certificate generated: {output_file}")
+
+            except Exception as e:
+                logging.error(f"Error processing row {index + 1}: {e}")
+
+    except Exception as e:
+        logging.error(f"Failed to generate certificates: {e}")
+

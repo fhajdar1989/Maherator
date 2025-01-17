@@ -104,8 +104,8 @@
         </div>
 
         <div class="form-group">
-            <label for="grad">Grad:</label>
-            <input type="text" id="grad" placeholder="Enter Grad">
+            <label for="grad_firme">Grad firme:</label>
+            <input type="text" id="grad_firme" placeholder="Enter Grad">
         </div>
 
         <div class="buttons">
@@ -224,7 +224,7 @@
 
         // Validate Inputs
         function validateInputs() {
-            const fields = ["broj_certifkata", "datum_dokumenta", "naziv_firme", "adresa_firme", "grad"];
+            const fields = ["broj_certifkata", "datum_dokumenta", "naziv_firme", "adresa_firme", "grad_firme"];
             for (let field of fields) {
                 const value = document.getElementById(field).value.trim();
                 if (!value) {
